@@ -95,16 +95,63 @@
             width: 80px; height: 15px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
         }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding-bottom: 30px; }
-        .step-card {
-            background: #fff; border: 2px solid var(--primary); border-radius: 10px;
-            padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
-        }
-        .step-card:hover:not(.locked) { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(92,64,51,0.3); background: var(--primary); color: #fff; }
-        .step-card.locked { opacity: 0.6; cursor: not-allowed; background: #e0d8c8; border-color: #aaa; }
-        .step-card .step-num { font-size: 0.9rem; color: var(--accent); margin-bottom: 5px; font-weight: bold; }
-        .step-card:hover:not(.locked) .step-num { color: #f4ebd9; }
-        .step-card .step-name { font-size: 1.2rem; font-weight: bold; }
+       .grid-container { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 16px; 
+    padding: 20px 0 30px; 
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.step-card {
+    background: #fff; 
+    border: 2px solid var(--primary); 
+    border-radius: 12px;
+    padding: 20px 10px; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    position: relative; 
+    overflow: hidden;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.step-card:hover:not(.locked) { 
+    transform: translateY(-3px); 
+    box-shadow: 0 8px 20px rgba(92,64,51,0.25); 
+    background: var(--primary); 
+    color: #fff; 
+}
+
+.step-card.locked { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+    background: #e8e0d0; 
+    border-color: #bbb; 
+}
+
+.step-card .step-num { 
+    font-size: 0.85rem; 
+    color: var(--accent); 
+    margin-bottom: 8px; 
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.step-card:hover:not(.locked) .step-num { 
+    color: #f4ebd9; 
+}
+
+.step-card .step-name { 
+    font-size: 1.15rem; 
+    font-weight: bold;
+    letter-spacing: 1px;
+}
         .step-done-mark { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 50%; font-size: 14px; line-height: 24px; font-weight: bold; }
 
         .interact-header { margin-bottom: 20px; text-align: center; border-bottom: 2px dashed var(--primary); padding-bottom: 10px; }
@@ -160,7 +207,11 @@
 
         @media (max-width: 600px) {
             .hero-title { font-size: 2.2rem; }
-            .grid-container { grid-template-columns: repeat(2, 1fr); }
+            .grid-container { 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 10px;
+    padding: 10px 0;
+}
             .interact-area { min-height: 300px; padding: 10px; }
             .header-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
             .header-btns button { padding: 4px 8px; font-size: 0.8rem; margin: 0; }
@@ -257,11 +308,14 @@
         ];
 
         // 预设器型数据
-        const shapePresets = {
-            egg: [60,70,80,75,60,40,20,15,15,15,15,20,30,40,50,60,55,50,60,70],
-            gourd: [15,20,30,45,55,50,40,30,25,30,45,65,80,90,95,90,75,55,40,30],
-            vase: [45,35,25,20,20,25,35,50,65,80,90,95,90,80,65,50,40,35,30,30]
-        };
+       const shapePresets = {
+    // 蛋壳陶 - 高柄杯造型，修长优雅
+    egg: [50, 55, 52, 45, 35, 20, 15, 12, 12, 15, 18, 22, 35, 50, 60, 58, 50, 40, 30, 25],
+    // 葫芦瓶 - 饱满圆润，上下两腹
+    gourd: [20, 25, 35, 50, 65, 60, 45, 30, 35, 55, 75, 85, 85, 75, 60, 45, 35, 28, 22, 20],
+    // 长颈瓶 - 玉壶春样式，经典耐看
+    vase: [30, 35, 30, 25, 20, 25, 40, 60, 78, 90, 92, 88, 78, 65, 50, 38, 30, 25, 20, 20]
+};
 
         let gameState = {
             currentStepIndex: 0, 
@@ -270,11 +324,13 @@
             potteryColor: 'var(--clay-wet)',
             isGlossy: false,
             roughness: 0,        
-            patternType: '',     
-            hollows: [],         
+           patternTypes: [],     
+            hollows: [], 
+                patternOffsets: {},   // 记录每个图案的 y 偏移，如 { 'line-0': 10, 'cloud-m': -15 }
             interactiveDone: false
         };
-
+let prevOnMove = null;   // 用于清理上一次的移动事件
+let prevOnEnd = null;    // 用于清理上一次的结束事件
         const views = { home: document.getElementById('home-view'), menu: document.getElementById('menu-view'), interact: document.getElementById('interact-view'), finish: document.getElementById('finish-view') };
         const modal = document.getElementById('sys-modal');
         const btnBack = document.getElementById('btn-back');
@@ -321,7 +377,7 @@
         }
 
         function resetGame() {
-            gameState = { currentStepIndex: 0, unlockedStep: 0, potteryShape: [], potteryColor: 'var(--clay-wet)', isGlossy: false, roughness: 0, patternType: '', hollows: [], interactiveDone: false };
+            gameState = { currentStepIndex: 0, unlockedStep: 0, potteryShape: [], potteryColor: 'var(--clay-wet)', isGlossy: false, roughness: 0, patternTypes: [], hollows: [],patternOffsets: {}, interactiveDone: false };
             switchView('home');
         }
 
@@ -347,7 +403,7 @@
         function stepComplete(msg) { gameState.interactiveDone = true; nextBtn.classList.remove('hidden'); if(msg) showAlert('操作成功', msg); }
 
         // ================= 重写的全能 SVG 引擎 (完美比例锁定，利用 viewBox 自动缩放) =================
-        function generatePotterySVG(shapeArr, color, isGlossy, patternType, hollows, roughness=0) {
+        function generatePotterySVG(shapeArr, color, isGlossy, patternTypes, hollows, roughness=0) {
             if(!shapeArr || shapeArr.length === 0) return '';
             
             // 内部参照坐标系永远固定为 200 x 240
@@ -391,37 +447,54 @@
                     { id: 'lotus-l', tag: 'path', attr: `d="M100,150 C70,140 60,120 70,100 C85,115 95,130 100,150 Z"` },
                     { id: 'lotus-r', tag: 'path', attr: `d="M100,150 C130,140 140,120 130,100 C115,115 105,130 100,150 Z"` }
                 ],
-                'cloud': [ // 祥云纹 (如意云头)
-                    { id: 'cl-1', tag: 'path', attr: `d="M60,120 A20,20 0 0,1 100,120 A30,30 0 0,1 160,120 A20,20 0 0,1 160,140 L60,140 A20,20 0 0,1 60,120 Z"` },
-                    { id: 'cl-2', tag: 'path', attr: `d="M80,80 A15,15 0 0,1 110,80 A20,20 0 0,1 150,80 A15,15 0 0,1 150,95 L80,95 A15,15 0 0,1 80,80 Z"` },
-                    { id: 'cl-3', tag: 'path', attr: `d="M50,170 A15,15 0 0,1 80,170 A20,20 0 0,1 120,170 A15,15 0 0,1 120,185 L50,185 A15,15 0 0,1 50,170 Z"` }
-                ],
-                'meander': [ // 回字纹
-                    { id: 'mean-1', tag: 'path', attr: `d="M20,120 L180,120 L180,90 L40,90 L40,110 L160,110 L160,100 L60,100"` },
-                    { id: 'mean-2', tag: 'path', attr: `d="M20,130 L180,130 L180,170 L40,170 L40,140 L160,140 L160,160 L60,160"` }
-                ]
+               'cloud': [ // 祥云纹 - 更圆润的如意云头
+    { id: 'cl-tl', tag: 'path', attr: 'd="M35,65 C20,65 15,45 35,40 C40,25 65,25 70,40 C90,45 85,65 70,65 C65,75 40,75 35,65 Z"' },
+    { id: 'cl-tr', tag: 'path', attr: 'd="M135,65 C120,65 115,45 135,40 C140,25 165,25 170,40 C190,45 185,65 170,65 C165,75 140,75 135,65 Z"' },
+    { id: 'cl-m', tag: 'path', attr: 'd="M60,120 C40,120 30,100 50,90 C55,70 85,70 100,80 C115,70 145,70 150,90 C170,100 160,120 140,120 C135,135 65,135 60,120 Z"' },
+    { id: 'cl-bl', tag: 'path', attr: 'd="M30,180 C15,180 10,160 30,155 C35,140 60,140 65,155 C85,160 80,180 65,180 C60,190 35,190 30,180 Z"' },
+    { id: 'cl-br', tag: 'path', attr: 'd="M140,180 C125,180 120,160 140,155 C145,140 170,140 175,155 C195,160 190,180 175,180 C170,190 145,190 140,180 Z"' }
+],
+'meander': [ // 回字纹 - 上下两排，更有边饰感
+    { id: 'm1', tag: 'path', attr: 'd="M25,70 L25,55 L50,55 L50,75 L30,75 L30,65 L45,65 L45,60 L35,60 L35,70 L50,70" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm2', tag: 'path', attr: 'd="M60,70 L60,55 L85,55 L85,75 L65,75 L65,65 L80,65 L80,60 L70,60 L70,70 L85,70" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm3', tag: 'path', attr: 'd="M95,70 L95,55 L120,55 L120,75 L100,75 L100,65 L115,65 L115,60 L105,60 L105,70 L120,70" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm4', tag: 'path', attr: 'd="M130,70 L130,55 L155,55 L155,75 L135,75 L135,65 L150,65 L150,60 L140,60 L140,70 L155,70" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm5', tag: 'path', attr: 'd="M165,70 L165,55 L190,55 L190,75 L170,75 L170,65 L185,65 L185,60 L175,60 L175,70 L190,70" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm6', tag: 'path', attr: 'd="M25,170 L25,155 L50,155 L50,175 L30,175 L30,165 L45,165 L45,160 L35,160 L35,170 L50,170" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm7', tag: 'path', attr: 'd="M60,170 L60,155 L85,155 L85,175 L65,175 L65,165 L80,165 L80,160 L70,160 L70,170 L85,170" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm8', tag: 'path', attr: 'd="M95,170 L95,155 L120,155 L120,175 L100,175 L100,165 L115,165 L115,160 L105,160 L105,170 L120,170" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm9', tag: 'path', attr: 'd="M130,170 L130,155 L155,155 L155,175 L135,175 L135,165 L150,165 L150,160 L140,160 L140,170 L155,170" fill="none" stroke="#222" stroke-width="2"' },
+    { id: 'm10', tag: 'path', attr: 'd="M165,170 L165,155 L190,155 L190,175 L170,175 L170,165 L185,165 L185,160 L175,160 L175,170 L190,170" fill="none" stroke="#222" stroke-width="2"' }
+],
             };
 
             let maskHollowsHTML = '';
             let normalPatternsHTML = '';
 
             // 2. 生成物理镂空遮罩与普通纹理
-            if (patternType && patternsDef[patternType]) {
-                patternsDef[patternType].forEach(p => {
-                    let isHollow = hollows && hollows.includes(p.id);
-                    if (isHollow) {
-                        // 在 mask 遮罩层中画黑色路径，将其物理“抠穿”
-                        maskHollowsHTML += `<${p.tag} ${p.attr} fill="none" stroke="black" stroke-width="8" stroke-linejoin="round" />`;
-                    } else {
-                        // 正常雕花纹理
-                        normalPatternsHTML += `<${p.tag} ${p.attr} fill="none" stroke="#222" stroke-width="2" class="pottery-pattern" data-id="${p.id}" cursor="pointer" stroke-linejoin="round" />`;
-                    }
-                    // 保留镂空位置的点击热区，以便容错交互
-                    if(isHollow) {
-                        normalPatternsHTML += `<${p.tag} ${p.attr} fill="none" stroke="transparent" stroke-width="12" class="pottery-pattern" data-id="${p.id}" cursor="pointer" />`;
-                    }
-                });
-            }
+           if (patternTypes && patternTypes.length > 0) {
+    patternTypes.forEach(patternType => {
+        if(patternsDef[patternType]) {
+            patternsDef[patternType].forEach(p => {
+                let isHollow = hollows && hollows.includes(p.id);
+                let offsetY = gameState.patternOffsets[p.id] || 0;  // 获取偏移量
+                let transformAttr = offsetY !== 0 ? ` transform="translate(0, ${offsetY})"` : '';
+                
+                if (isHollow) {
+                    // 镂空遮罩用的黑色笔画
+                    maskHollowsHTML += `<${p.tag} ${p.attr} fill="none" stroke="black" stroke-width="8" stroke-linejoin="round"${transformAttr} />`;
+                } else {
+                    // 正常可见的纹理
+                    normalPatternsHTML += `<${p.tag} ${p.attr} fill="none" stroke="#222" stroke-width="2" class="pottery-pattern" data-id="${p.id}" cursor="pointer" stroke-linejoin="round"${transformAttr} />`;
+                }
+                // 镂空时多加一层透明点击区域（便于点击），也要应用偏移
+                if(isHollow) {
+                    normalPatternsHTML += `<${p.tag} ${p.attr} fill="none" stroke="transparent" stroke-width="12" class="pottery-pattern" data-id="${p.id}" cursor="pointer"${transformAttr} />`;
+                }
+            });
+        }
+    });
+}
 
             let filter = isGlossy ? `filter="drop-shadow(0 0 10px rgba(255,255,255,0.4))"` : '';
             let glossOverlay = isGlossy ? `<path d="${d}" fill="url(#glossGrad)" opacity="0.3" pointer-events="none"/>` : '';
@@ -571,7 +644,7 @@
         function setPreset(type) { gameState.potteryShape = [...shapePresets[type]]; updateShapeSVG(); }
         function updateShapeSVG(roughOverride = 0) {
             const wrap = document.getElementById('pottery-wrap');
-            if(wrap) wrap.innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternType, gameState.hollows, roughOverride);
+            if(wrap) wrap.innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternTypes, gameState.hollows, roughOverride);
         }
         function finishShape() { document.getElementById('wheel-cont').classList.remove('spinning'); stepComplete('拉坯成型！接下来无论去到哪个工序，器型比例都会被永久锁定。'); }
 
@@ -667,17 +740,115 @@
                 </div>
             `;
             updateShapeSVG(0);
+            // 初始化按钮选中状态
+setTimeout(() => {
+    document.querySelectorAll('.pattern-selector button').forEach(btn => {
+        const btnType = btn.getAttribute('onclick').match(/'(\w+)'/)[1];
+        if(gameState.patternTypes.includes(btnType)) {
+            btn.style.background = 'var(--accent)';
+            btn.style.color = '#fff';
         }
-        function applyPattern(type) {
-            const patternNames = {'lines': '经典弦纹', 'wave': '水波纹', 'triangle': '三角锯齿纹', 'lotus': '莲花纹', 'cloud': '祥云纹', 'meander': '回字纹'};
-            gameState.patternType = type;
-            gameState.hollows = []; 
-            updateShapeSVG(0);
-            if(!gameState.interactiveDone) stepComplete(`贴花成功！你选择了极具古风的：${patternNames[type]}。`);
+    });
+}, 50);
+       setTimeout(bindPatternDrag, 150); }
+       function applyPattern(type) {
+    const patternNames = {'lines': '经典弦纹', 'wave': '水波纹', 'triangle': '三角锯齿纹', 'lotus': '莲花纹', 'cloud': '祥云纹', 'meander': '回字纹'};
+    const idx = gameState.patternTypes.indexOf(type);
+    if(idx > -1) {
+        // 已选中则取消
+        gameState.patternTypes.splice(idx, 1);
+    } else {
+        // 未选中则添加
+        gameState.patternTypes.push(type);
+    }
+    gameState.hollows = []; 
+    updateShapeSVG(0);
+    setTimeout(bindPatternDrag, 150);   // ← 加这一行
+    // 更新按钮状态
+    document.querySelectorAll('.pattern-selector button').forEach(btn => {
+        const btnType = btn.getAttribute('onclick').match(/'(\w+)'/)[1];
+        if(gameState.patternTypes.includes(btnType)) {
+            btn.style.background = 'var(--accent)';
+            btn.style.color = '#fff';
+        } else {
+            btn.style.background = '#8b6b4a';
+            btn.style.color = '';
         }
+    });
+    
+    if(gameState.patternTypes.length > 0 && !gameState.interactiveDone) {
+        const names = gameState.patternTypes.map(t => patternNames[t]).join('、');
+        stepComplete(`塑形成功！你选择了：${names}。`);
+    }
+}
+function bindPatternDrag() {
+    const patterns = document.querySelectorAll('.pottery-pattern');
+    let draggedElement = null;
+    let startY = 0;
+    let startOffset = 0;
+    let currentId = null;
 
+    const onStart = (e) => {
+        const el = e.target.closest('.pottery-pattern');
+        if (!el) return;
+        e.preventDefault();
+        draggedElement = el;
+        currentId = el.getAttribute('data-id');
+        const touch = e.touches ? e.touches[0] : e;
+        startY = touch.clientY;
+        startOffset = gameState.patternOffsets[currentId] || 0;
+        el.style.transition = 'none';
+    };
+
+    const onMove = (e) => {
+        if (!draggedElement) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const dy = touch.clientY - startY;
+        const newOffset = startOffset + dy;
+        gameState.patternOffsets[currentId] = newOffset;
+        updateShapeSVG(0);
+        setTimeout(bindPatternDrag, 20);
+    };
+
+    const onEnd = () => {
+        if (draggedElement) {
+            draggedElement.style.transition = '';
+            draggedElement = null;
+            currentId = null;
+        }
+    };
+
+    // ===== 清理上一次绑定的全局事件，防止累积 =====
+    if (prevOnMove) {
+        document.removeEventListener('mousemove', prevOnMove);
+        document.removeEventListener('touchmove', prevOnMove);
+    }
+    if (prevOnEnd) {
+        document.removeEventListener('mouseup', prevOnEnd);
+        document.removeEventListener('touchend', prevOnEnd);
+    }
+
+    // 给每个图案加上“开始拖动”事件
+    patterns.forEach(pattern => {
+        pattern.addEventListener('mousedown', onStart);
+        pattern.addEventListener('touchstart', onStart, { passive: false });
+    });
+
+    // 添加移动和松手的全局事件
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+
+    // 记住本次的处理函数，供下次清理
+    prevOnMove = onMove;
+    prevOnEnd = onEnd;
+}
+   
         function renderStep8() {
-            if(!gameState.patternType) gameState.patternType = 'lotus'; 
+            if(!gameState.patternTypes || gameState.patternTypes.length === 0) {
+    gameState.patternTypes = ['lotus'];
+} 
             interactArea.innerHTML = `
                 <div class="action-hint">点击器身上的黑色纹理图案，将它们雕刻镂空</div>
                 <div class="wheel-container" id="hollow-wrap">
@@ -748,7 +919,7 @@
                 let p = document.createElement('div');
                 // 宽高比设定为严格的 1:1.2，即 100:120，杜绝形变
                 p.style.cssText = "width: 100px; height: 120px;";
-                p.innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternType, gameState.hollows, 0);
+                p.innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternTypes, gameState.hollows, 0);
                 kiln.appendChild(p);
             }
             if(type === 'wood' && !window.kilnItems.wood) {
@@ -772,7 +943,7 @@
                     <input type="range" id="sd-fire" min="0" max="1000" value="0" oninput="controlFire()">
                 </div>
             `;
-            document.getElementById('kiln-pot-wrap').innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternType, gameState.hollows, 0);
+            document.getElementById('kiln-pot-wrap').innerHTML = gameState.patternTypes(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternTypes, gameState.hollows, 0);
         }
         function controlFire() {
             let temp = document.getElementById('sd-fire').value;
@@ -783,7 +954,7 @@
             if(temp > 800) { color = 'var(--clay-black)'; gameState.potteryColor = color; } 
             else if (temp > 400) { color = '#3b312a'; }
             
-            document.getElementById('kiln-pot-wrap').innerHTML = generatePotterySVG(gameState.potteryShape, color, gameState.isGlossy, gameState.patternType, gameState.hollows, 0);
+            document.getElementById('kiln-pot-wrap').innerHTML = generatePotterySVG(gameState.potteryShape, color, gameState.isGlossy, gameState.patternTypes, gameState.hollows, 0);
             
             if(temp == 1000 && !gameState.interactiveDone) {
                 document.querySelector('.kiln-area').classList.add('kiln-closed');
@@ -817,7 +988,7 @@
         function renderFinish() {
             switchView('finish');
             // 最终大图展示同样锁定为 1:1.2 的容器 (250x300)
-            document.getElementById('final-pottery-container').innerHTML = generatePotterySVG(gameState.potteryShape, 'var(--clay-black)', true, gameState.patternType, gameState.hollows, 0);
+            document.getElementById('final-pottery-container').innerHTML = generatePotterySVG(gameState.potteryShape, 'var(--clay-black)', true, gameState.patternTypes, gameState.hollows, 0);
         }
     </script>
 </body>
