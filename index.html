@@ -943,7 +943,7 @@ function bindPatternDrag() {
                     <input type="range" id="sd-fire" min="0" max="1000" value="0" oninput="controlFire()">
                 </div>
             `;
-            document.getElementById('kiln-pot-wrap').innerHTML = gameState.patternTypes(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternTypes, gameState.hollows, 0);
+            document.getElementById('kiln-pot-wrap').innerHTML = generatePotterySVG(gameState.potteryShape, gameState.potteryColor, gameState.isGlossy, gameState.patternTypes, gameState.hollows, 0);
         }
         function controlFire() {
             let temp = document.getElementById('sd-fire').value;
